@@ -35,13 +35,13 @@ public:
 	std::vector<int> N; // N_m: number of words in the m-th document.
 	boost::mt19937 engine;
 
+	double c;
+	double eta;
 	double a0;
 	double b0;
-	double c;
 	double e0;
 	double f0;
 
-	double eta;
 	double gamma0;
 	std::vector<std::vector<int>> z;
 	std::vector<double> p;
