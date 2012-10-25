@@ -16,7 +16,7 @@ inline std::vector<double> dirichletRandom(boost::mt19937 &engine, const std::ve
 	for(int k=0; k<K; ++k){
 		boost::math::gamma_distribution<> dist(alpha[k], 1.0);
 		y[k] = boost::math::quantile(dist, boost::uniform_01<>()(engine));
-		//y[k] = boost::gamma_distribution<>(alpha[k], 1.0)(engine);	// shapeƒpƒ‰ƒ[ƒ^‚ª‘å‚«‚¢‚Æ—‚¿‚é
+		//y[k] = boost::gamma_distribution<>(alpha[k], 1.0)(engine);	// shapeãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãŒå¤§ãã„ã¨è½ã¡ã‚‹
 		sumY += y[k];
 	}
 
@@ -38,7 +38,7 @@ inline double betaRandom(boost::mt19937 &engine, const double &alpha, const doub
 	boost::math::beta_distribution<> dist(alpha, beta);
 	return boost::math::quantile(dist, boost::uniform_01<>()(engine));
 }
-// ‘½€•ª•z‚©‚ç‚ÌƒTƒ“ƒvƒŠƒ“ƒOA‚½‚¾‚µƒpƒ‰ƒ[ƒ^‚Í³‹K‰»‚³‚ê‚Ä‚¢‚È‚¢i\sum p_i‚ª1‚Æ‚ÍŒÀ‚ç‚È‚¢j
+// å¤šé …åˆ†å¸ƒã‹ã‚‰ã®ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ã€ãŸã ã—ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã¯æ­£è¦åŒ–ã•ã‚Œã¦ã„ãªã„ï¼ˆ\sum p_iãŒ1ã¨ã¯é™ã‚‰ãªã„ï¼‰
 inline int multinomialByUnnormalizedParameters(boost::mt19937 &engine, const vector<double> &p)
 {
 	const int K=p.size();
@@ -71,7 +71,7 @@ inline double logsumexp (double x, double y, bool flg)
 		return vmax + std::log (std::exp (vmin - vmax) + 1.0);
 	}
 }
-// ‘½€•ª•z‚©‚ç‚ÌƒTƒ“ƒvƒŠƒ“ƒOA‚½‚¾‚µƒpƒ‰ƒ[ƒ^‚Ílog(p_1), ... , log(p_K)‚Å—^‚¦‚ç‚êA³‹K‰»‚³‚ê‚Ä‚¢‚È‚¢i\sum p_i‚ª1‚Æ‚ÍŒÀ‚ç‚È‚¢j
+// å¤šé …åˆ†å¸ƒã‹ã‚‰ã®ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ã€ãŸã ã—ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã¯log(p_1), ... , log(p_K)ã§ä¸ãˆã‚‰ã‚Œã€æ­£è¦åŒ–ã•ã‚Œã¦ã„ãªã„ï¼ˆ\sum p_iãŒ1ã¨ã¯é™ã‚‰ãªã„ï¼‰
 inline int multinomialByUnnormalizedLogParameters(boost::mt19937 &engine, const vector<double> &lnp)
 {
 	const int K=lnp.size();

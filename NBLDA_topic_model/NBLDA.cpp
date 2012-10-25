@@ -2,9 +2,9 @@
 #include "NBLDA.h"
 
 using namespace std;
-// ƒfƒBƒŠƒNƒŒ•ª•z‚©‚ç—”‚ğ¶¬‚·‚é http://en.wikipedia.org/wiki/Dirichlet_distribution#Gamma_distribution
+// ãƒ‡ã‚£ãƒªã‚¯ãƒ¬åˆ†å¸ƒã‹ã‚‰ä¹±æ•°ã‚’ç”Ÿæˆã™ã‚‹ http://en.wikipedia.org/wiki/Dirichlet_distribution#Gamma_distribution
 
-// Chinese restaurant table distribution‚©‚ç‚Ì—”¶¬
+// Chinese restaurant table distributionã‹ã‚‰ã®ä¹±æ•°ç”Ÿæˆ
 int CRTRandom(boost::mt19937 &engine, const int &n, const double &alpha)
 {
 	if(n < 1){
@@ -82,7 +82,7 @@ NBLDA::NBLDA(const vector<vector<int>> &corpus,
 	phi = vector<vector<double>>(K, vector<double>(V));
 	
 
-	// ‰B‚ê•Ï”‚Ì‰Šú‰»
+	// éš ã‚Œå¤‰æ•°ã®åˆæœŸåŒ–
 	z = vector<vector<int>>(M);
 	for(int m=0; m<M; ++m){
 		z[m] = vector<int>(N[m]);

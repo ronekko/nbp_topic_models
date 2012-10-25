@@ -1,4 +1,4 @@
-// NBLDA_topic_model.cpp : ƒRƒ“ƒ\[ƒ‹ ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌƒGƒ“ƒgƒŠ ƒ|ƒCƒ“ƒg‚ð’è‹`‚µ‚Ü‚·B
+// NBLDA_topic_model.cpp : ã‚³ãƒ³ã‚½ãƒ¼ãƒ« ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ã‚¨ãƒ³ãƒˆãƒª ãƒã‚¤ãƒ³ãƒˆã‚’å®šç¾©ã—ã¾ã™ã€‚
 //
 
 #include "stdafx.h"
@@ -65,7 +65,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	boost::mt19937 engine;
 	vector<vector<double>> theta(M);
 	
-	// lHƒgƒsƒbƒN‚½‚¿‚Ì¶¬
+	// äººå·¥ãƒˆãƒ”ãƒƒã‚¯ãŸã¡ã®ç”Ÿæˆ
 	vector<vector<double>> topics = createTopics();
 	vector<boost::random::discrete_distribution<>> word_distributions(K);
 	for(int k=0; k<K; ++k){
