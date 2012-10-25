@@ -58,3 +58,5 @@
 #include <boost/chrono.hpp>
 
 #include <opencv2/opencv.hpp>
+
+#include "utility.hpp"

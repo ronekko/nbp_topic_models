@@ -18,7 +18,6 @@ public:
 	void train(int iter);
 	void sample_z(void);
 	void sample_p(void);
-	void sample_p_prime(void);
 	void sample_l(void);
 	void sample_l_prime(void);
 	void sample_gamma_0(void);
@@ -43,14 +42,14 @@ public:
 	double f0;
 
 	double gamma0;
-	std::vector<std::vector<int>> z;
-	std::vector<double> p;
-	std::vector<double> p_prime;
-	std::vector<std::vector<int>> l;
-	std::vector<int> l_prime;
-	std::vector<double> r;
-	std::vector<std::vector<double>> theta;
-	std::vector<std::vector<double>> phi;
+	std::vector<std::vector<int>> z;		// z[m][i]
+	std::vector<double> p;					// p[m]
+	std::vector<double> p_prime;			// p_prime[m]
+	std::vector<std::vector<int>> l;		// l[m][k]
+	std::vector<int> l_prime;				// l_prime[m]
+	std::vector<double> r;					// r[m]
+	std::vector<std::vector<double>> theta;	// theta[m][k]
+	std::vector<std::vector<double>> phi;	// phi[k][v]
 
 	std::vector<std::vector<int>> n_km;
 	std::vector<std::vector<int>> n_kv;

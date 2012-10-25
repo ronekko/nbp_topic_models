@@ -6,26 +6,6 @@
 
 using namespace std;
 
-// ディリクレ分布から乱数を生成する http://en.wikipedia.org/wiki/Dirichlet_distribution#Gamma_distribution
-vector<double> dirichletRandom(boost::mt19937 &engine, const vector<double> &alpha)
-{	
-	const int K = alpha.size();
-	vector<double> y(K);
-	double sumY = 0.0;
-
-	for(int k=0; k<K; ++k){
-		boost::math::gamma_distribution<> dist(alpha[k], 1.0);
-		y[k] = boost::math::quantile(dist, boost::uniform_01<>()(engine));
-		//y[k] = boost::gamma_distribution<>(alpha[k], 1.0)(engine);	// shapeパラメータが大きいと落ちる
-		sumY += y[k];
-	}
-
-	for(int k=0; k<K; ++k){
-		y[k] /= sumY;
-	}
-
-	return y;
-}
 
 vector<vector<double>> createTopics(void)
 {
@@ -97,7 +77,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		int N_m = 100;
 		corpus[m].resize(N_m);
 
-		vector<double> theta_m = dirichletRandom(engine, alpha);
+		vector<double> theta_m = util::dirichletRandom(engine, alpha);
 		theta[m] = theta_m;
 
 		boost::random::discrete_distribution<> discrete(theta_m);
@@ -111,7 +91,10 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	NBLDA nblda(corpus, V, K);
 
-
+	for(int i=0; i<100; ++i){
+		cout << i << endl;
+		nblda.train(1);
+	}
 
 
 

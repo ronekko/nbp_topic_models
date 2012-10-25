@@ -2,70 +2,8 @@
 #include "NBLDA.h"
 
 using namespace std;
-double gammaRandom(boost::mt19937 &engine, const double &shape, const double &scale)
-{
-	boost::math::gamma_distribution<> dist(shape, scale);
-	return boost::math::quantile(dist, boost::uniform_01<>()(engine));
-}
+// ディリクレ分布から乱数を生成する http://en.wikipedia.org/wiki/Dirichlet_distribution#Gamma_distribution
 
-double betaRandom(boost::mt19937 &engine, const double &alpha, const double &beta)
-{
-	boost::math::beta_distribution<> dist(alpha, beta);
-	return boost::math::quantile(dist, boost::uniform_01<>()(engine));
-}
-// 多項分布からのサンプリング、ただしパラメータは正規化されていない（\sum p_iが1とは限らない）
-int multinomialByUnnormalizedParameters(boost::mt19937 &engine, const vector<double> &p)
-{
-	const int K=p.size();
-	vector<double> CDF(K);
-	double z = 0.0;
-	for(int k=0; k<K; ++k){
-		CDF[k] = z + p[k];
-		z = CDF[k];
-	}
-
-	double u = boost::uniform_01<>()(engine) * CDF.back();
-	for(int k=0; k<K; ++k){
-		if(u < CDF[k]){
-			return k;
-		}
-	}
-	cout <<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
-	return K-1;
-}
-
-double logsumexp (double x, double y, bool flg)
-{
-	if (flg) return y; // init mode
-	if (x == y) return x + 0.69314718055; // log(2)
-	double vmin = std::min (x, y);
-	double vmax = std::max (x, y);
-	if (vmax > vmin + 50) {
-		return vmax;
-	} else {
-		return vmax + std::log (std::exp (vmin - vmax) + 1.0);
-	}
-}
-// 多項分布からのサンプリング、ただしパラメータはlog(p_1), ... , log(p_K)で与えられ、正規化されていない（\sum p_iが1とは限らない）
-int multinomialByUnnormalizedLogParameters(boost::mt19937 &engine, const vector<double> &lnp)
-{
-	const int K=lnp.size();
-	vector<double> logCDF(K);
-	double z = 0.0;
-	for(int k=0; k<K; ++k){
-		z = logsumexp(z, lnp[k], (k==0));
-		logCDF[k] = z;
-	}
-
-	double u = log(boost::uniform_01<>()(engine)) + logCDF.back();
-	for(int k=0; k<K; ++k){
-		if(u < logCDF[k]){
-			return k;
-		}
-	}
-
-	return K-1;
-}
 // Chinese restaurant table distributionからの乱数生成
 int CRTRandom(boost::mt19937 &engine, const int &n, const double &alpha)
 {
@@ -107,7 +45,7 @@ void test_CRTRandom(void)
 		}
 		
 		cout << "empirical\tpmf[l]\t\tdiff" << endl;
-		for(int l=1; l<=n; ++l){
+		for(int l=0; l<=n; ++l){
 			cout << prop[l] << "    \t" << pmf[l] << "    \t" << prop[l] - pmf[l] << endl;
 		}
 	}
@@ -134,6 +72,15 @@ NBLDA::NBLDA(const vector<vector<int>> &corpus,
 	c = 1.0;
 	eta = 0.05;
 	a0 = b0 = e0 = f0 = 0.01;
+	
+	p = vector<double>(M);
+	p_prime = vector<double>(M);
+	l = vector<vector<int>>(M, vector<int>(K, 0));
+	l_prime = vector<int>(M);
+	r = vector<double>(M);
+	theta = vector<vector<double>>(M, vector<double>(K));
+	phi = vector<vector<double>>(K, vector<double>(V));
+	
 
 	// 隠れ変数の初期化
 	z = vector<vector<int>>(M);
@@ -146,6 +93,14 @@ NBLDA::NBLDA(const vector<vector<int>> &corpus,
 	}
 
 	set_counts_from_z();
+
+	gamma0 = util::gammaRandom(engine, e0, 1.0 / f0);
+	for(int m=0; m<M; ++m){
+		//p[m] = util::betaRandom(engine, a0, b0);
+		p[m] = 0.5;
+		p_prime[m] = K * log(1.0 - p[m]) / (K * log(1.0 - p[m]) - c);
+		r[m] = util::gammaRandom(engine, gamma0, 1.0 / c);
+	}
 
 	//test_CRTRandom();
 }
@@ -173,49 +128,90 @@ void NBLDA::set_counts_from_z(void)
 
 void NBLDA::train(int iter)
 {
-	sample_z();
 	sample_p();
-	sample_p_prime();
 	sample_l();
-	sample_l_prime();
 	sample_gamma_0();
 	sample_r();
 	sample_theta();
 	sample_phi();
+	sample_z();
 }
 
 void NBLDA::sample_z(void)
 {
+	for(int m=0; m<M; ++m){
+		for(int i=0; i<N[m]; ++i){
+			int v = corpus[m][i];
+			vector<double> mult_params(K);
+			for(int k=0; k<K; ++k){
+				mult_params[k] = phi[k][v] * theta[m][k];
+			}
+			z[m][i] = util::multinomialByUnnormalizedParameters(engine, mult_params);
+		}
+	}
 }
 
 void NBLDA::sample_p(void)
 {
-}
-
-void NBLDA::sample_p_prime(void)
-{
+	for(int m=0; m<M; ++m){
+		double a = a0 + N[m];
+		double b = b0 + K + r[m];
+		p[m] = util::betaRandom(engine, a, b);
+		p_prime[m] = K * log(1.0 - p[m]) / (K * log(1.0 - p[m]) - c);
+	}
 }
 
 void NBLDA::sample_l(void)
 {
+	for(int m=0; m<M; ++m){
+		for(int k=0; k<K; ++k){
+			l[m][k] = CRTRandom(engine, n_km[k][m], r[m]);
+		}
+	}
 }
 
 void NBLDA::sample_l_prime(void)
 {
+	for(int m=0; m<M; ++m){
+		int l_m_sum = boost::accumulate(l[m], 0);
+		l_prime[m] = CRTRandom(engine, l_m_sum, gamma0);
+	}
 }
 
 void NBLDA::sample_gamma_0(void)
 {
+	double shape = e0 + boost::accumulate(l_prime, 0);
+	double scale = 1.0 / (f0 - boost::accumulate(p_prime, 0.0, [](double sum, double x){ return sum + log(1.0 - x);}));
+	gamma0 = util::gammaRandom(engine, shape, scale);	
 }
 
 void NBLDA::sample_r(void)
 {
+	for(int m=0; m<M; ++m){
+		double shape = gamma0 + boost::accumulate(l[m], 0);
+		double scale = 1.0 / (c - K * log(1.0 - p[m]));
+		r[m] = util::gammaRandom(engine, shape, scale);
+	}
 }
 
 void NBLDA::sample_theta(void)
 {
+	for(int m=0; m<M; ++m){
+		for(int k=0; k<K; ++k){
+			double shape = r[m] + n_km[k][m];
+			double scale = p[m];
+			theta[m][k] = util::gammaRandom(engine, shape, scale);
+		}
+	}
 }
 
 void NBLDA::sample_phi(void)
 {
+	for(int k=0; k<K; ++k){
+		vector<double> eta_post(V, eta);
+		for(int v=0; v<V; ++v){
+			eta_post[v] += n_kv[k][v];
+		}
+		phi[k] = util::dirichletRandom(engine, eta_post);
+	}
 }
