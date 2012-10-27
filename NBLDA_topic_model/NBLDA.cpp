@@ -80,7 +80,15 @@ NBLDA::NBLDA(const vector<vector<int>> &corpus,
 	r = vector<double>(M);
 	theta = vector<vector<double>>(M, vector<double>(K));
 	phi = vector<vector<double>>(K, vector<double>(V));
-	
+
+	N_total = boost::accumulate(N, 0);
+	y = vector<vector<int>>(M, vector<int>(V, 0));
+	for(int m=0; m<M; ++m){
+		for(int i=0; i<N[m]; ++i){
+			int v = corpus[m][i];
+			y[m][v]++;
+		}
+	}
 
 	// 隠れ変数の初期化
 	z = vector<vector<int>>(M);
@@ -126,6 +134,30 @@ void NBLDA::set_counts_from_z(void)
 	}
 }
 
+double NBLDA::calc_perplexity(void)
+{
+	double total = 0.0;
+	double sum_denominator = 0.0;
+	for(int m=0; m<M; ++m){
+		for(int v=0; v<V; ++v){
+			int y_mv = y[m][v];			
+			double sum_numerator = 0.0;
+			for(int k=0; k<K; ++k){
+				sum_numerator += theta[m][k] * phi[k][v];
+				sum_denominator += theta[m][k] * phi[k][v];
+			}
+			if(y_mv != 0){
+				total += y_mv * log(sum_numerator);
+			}
+		}
+	}
+
+	total -= N_total * log(sum_denominator);
+
+	return -total / static_cast<double>(N_total);
+	//return exp(-total / static_cast<double>(N_total));
+}
+
 void NBLDA::train(int iter)
 {
 	sample_p();
@@ -142,11 +174,22 @@ void NBLDA::sample_z(void)
 	for(int m=0; m<M; ++m){
 		for(int i=0; i<N[m]; ++i){
 			int v = corpus[m][i];
+			int k_old = z[m][i];
+
+			n_km[k_old][m]--;
+			n_kv[k_old][v]--;
+			n_k[k_old]--;
+
 			vector<double> mult_params(K);
 			for(int k=0; k<K; ++k){
 				mult_params[k] = phi[k][v] * theta[m][k];
 			}
-			z[m][i] = util::multinomialByUnnormalizedParameters(engine, mult_params);
+			int k_new = util::multinomialByUnnormalizedParameters(engine, mult_params);
+
+			z[m][i] = k_new;
+			n_km[k_new][m]++;
+			n_kv[k_new][v]++;
+			n_k[k_new]++;
 		}
 	}
 }
