@@ -2,55 +2,6 @@
 #include "NBLDA.h"
 
 using namespace std;
-// ディリクレ分布から乱数を生成する http://en.wikipedia.org/wiki/Dirichlet_distribution#Gamma_distribution
-
-// Chinese restaurant table distributionからの乱数生成
-int CRTRandom(boost::mt19937 &engine, const int &n, const double &alpha)
-{
-	if(n < 1){
-		return 0;
-	}
-
-	int l=1;
-	for(int i=1; i<n; ++i){
-		double p = alpha / (i + alpha);
-		l += boost::bernoulli_distribution<>(p)(engine);
-	}
-	return l;
-}
-void test_CRTRandom(void)
-{
-	boost::mt19937 engine(0);
-	double alpha = 4.0;
-	int r = 100000000;
-	{
-		//int n = 5; double pmf[] = {0, 24, 50, 35, 10, 1};
-		//int n = 6; double pmf[] = {0, 120, 274, 225, 85, 15, 1};
-		//int n = 7; double pmf[] = {0, 720, 1764, 1624, 735, 175, 21, 1};
-		//int n = 8; double pmf[] = {0, 5040, 13068, 13132, 6769, 1960, 322, 28, 1};
-		int n = 9; double pmf[] = {0, 40320, 109584, 118124, 67284, 22449, 4536, 546, 36, 1};
-		for(int l=1; l<=n; ++l){	pmf[l] *= pow(alpha, l); }
-		double total = boost::accumulate(pmf, 0.0);
-		for(int l=1; l<=n; ++l){	pmf[l] /= total; }
-
-		vector<int> result(n+1, 0);
-		for(int i=0; i<r; ++i){
-			int l = CRTRandom(engine, n, alpha);
-			result[l]++;
-		}
-
-		vector<double> prop(n+1, 0.0);
-		for(int l=1; l<=n; ++l){
-			prop[l] = result[l] / static_cast<double>(r);
-		}
-		
-		cout << "empirical\tpmf[l]\t\tdiff" << endl;
-		for(int l=0; l<=n; ++l){
-			cout << prop[l] << "    \t" << pmf[l] << "    \t" << prop[l] - pmf[l] << endl;
-		}
-	}
-}
-
 
 NBLDA::NBLDA(const vector<vector<int>> &corpus,
 							const int &V,
@@ -158,6 +109,12 @@ double NBLDA::calc_perplexity(void)
 	//return exp(-total / static_cast<double>(N_total));
 }
 
+
+void NBLDA::show_parameters(void)
+{
+}
+
+
 void NBLDA::train(int iter)
 {
 	sample_p();
@@ -208,7 +165,7 @@ void NBLDA::sample_l(void)
 {
 	for(int m=0; m<M; ++m){
 		for(int k=0; k<K; ++k){
-			l[m][k] = CRTRandom(engine, n_km[k][m], r[m]);
+			l[m][k] = util::CRTRandom(engine, n_km[k][m], r[m]);
 		}
 	}
 }
@@ -217,7 +174,7 @@ void NBLDA::sample_l_prime(void)
 {
 	for(int m=0; m<M; ++m){
 		int l_m_sum = boost::accumulate(l[m], 0);
-		l_prime[m] = CRTRandom(engine, l_m_sum, gamma0);
+		l_prime[m] = util::CRTRandom(engine, l_m_sum, gamma0);
 	}
 }
 

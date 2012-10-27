@@ -16,6 +16,7 @@ public:
 	NBLDA(void);
 	~NBLDA(void);
 	double calc_perplexity(void);
+	void show_parameters(void);
 	void train(int iter);
 	void sample_z(void);
 	void sample_p(void);
@@ -35,6 +36,7 @@ public:
 	std::vector<int> N; // N[m]: number of words in the m-th document.
 	int N_total;		// 全文書の全トークン数
 	std::vector<std::vector<int>> y;		// y[m][v]: 文書m中の単語vの出現回数
+	int iteration;
 	boost::mt19937 engine;
 
 	double c;

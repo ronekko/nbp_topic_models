@@ -7,6 +7,16 @@ namespace util
 
 using namespace std;
 
+// shapeかscaleがほぼ0のときは常に0を返す（ガンマ分布の定義は 0<shape, 0<scale であるため）
+inline double gammaRandom(boost::mt19937 &engine, const double &shape, const double &scale)
+{
+	if(shape < 1.0e-300 || scale < 1.0e-300){ return 0; }
+	boost::math::gamma_distribution<> dist(shape, scale);
+	return boost::math::quantile(dist, boost::uniform_01<>()(engine));
+}
+
+
+// ディリクレ分布から乱数を生成する http://en.wikipedia.org/wiki/Dirichlet_distribution#Gamma_distribution
 inline std::vector<double> dirichletRandom(boost::mt19937 &engine, const std::vector<double> &alpha)
 {	
 	const int K = alpha.size();
@@ -14,9 +24,8 @@ inline std::vector<double> dirichletRandom(boost::mt19937 &engine, const std::ve
 	double sumY = 0.0;
 
 	for(int k=0; k<K; ++k){
-		boost::math::gamma_distribution<> dist(alpha[k], 1.0);
-		y[k] = boost::math::quantile(dist, boost::uniform_01<>()(engine));
 		//y[k] = boost::gamma_distribution<>(alpha[k], 1.0)(engine);	// shapeパラメータが大きいと落ちる
+		y[k] = gammaRandom(engine, alpha[k], 1.0);
 		sumY += y[k];
 	}
 
@@ -27,17 +36,13 @@ inline std::vector<double> dirichletRandom(boost::mt19937 &engine, const std::ve
 	return y;
 }
 
-inline double gammaRandom(boost::mt19937 &engine, const double &shape, const double &scale)
-{
-	boost::math::gamma_distribution<> dist(shape, scale);
-	return boost::math::quantile(dist, boost::uniform_01<>()(engine));
-}
 
 inline double betaRandom(boost::mt19937 &engine, const double &alpha, const double &beta)
 {
 	boost::math::beta_distribution<> dist(alpha, beta);
 	return boost::math::quantile(dist, boost::uniform_01<>()(engine));
 }
+
 // 多項分布からのサンプリング、ただしパラメータは正規化されていない（\sum p_iが1とは限らない）
 inline int multinomialByUnnormalizedParameters(boost::mt19937 &engine, const vector<double> &p)
 {
@@ -92,5 +97,50 @@ inline int multinomialByUnnormalizedLogParameters(boost::mt19937 &engine, const 
 	return K-1;
 }
 
+// Chinese restaurant table distributionからの乱数生成
+inline int CRTRandom(boost::mt19937 &engine, const int &n, const double &alpha)
+{
+	if(n < 1){ return 0; }
+	if(alpha == 0){ return 1;}
 
+	int l=1;
+	for(int i=1; i<n; ++i){
+		double p = alpha / (i + alpha);
+		l += boost::bernoulli_distribution<>(p)(engine);
+	}
+	return l;
+}
+
+inline void test_CRTRandom(void)
+{
+	boost::mt19937 engine(0);
+	double alpha = 4.0;
+	int r = 100000000;
+	{
+		//int n = 5; double pmf[] = {0, 24, 50, 35, 10, 1};
+		//int n = 6; double pmf[] = {0, 120, 274, 225, 85, 15, 1};
+		//int n = 7; double pmf[] = {0, 720, 1764, 1624, 735, 175, 21, 1};
+		//int n = 8; double pmf[] = {0, 5040, 13068, 13132, 6769, 1960, 322, 28, 1};
+		int n = 9; double pmf[] = {0, 40320, 109584, 118124, 67284, 22449, 4536, 546, 36, 1};
+		for(int l=1; l<=n; ++l){	pmf[l] *= pow(alpha, l); }
+		double total = boost::accumulate(pmf, 0.0);
+		for(int l=1; l<=n; ++l){	pmf[l] /= total; }
+
+		vector<int> result(n+1, 0);
+		for(int i=0; i<r; ++i){
+			int l = CRTRandom(engine, n, alpha);
+			result[l]++;
+		}
+
+		vector<double> prop(n+1, 0.0);
+		for(int l=1; l<=n; ++l){
+			prop[l] = result[l] / static_cast<double>(r);
+		}
+		
+		cout << "empirical\tpmf[l]\t\tdiff" << endl;
+		for(int l=0; l<=n; ++l){
+			cout << prop[l] << "    \t" << pmf[l] << "    \t" << prop[l] - pmf[l] << endl;
+		}
+	}
+}
 };

@@ -1,8 +1,9 @@
-// NBLDA_topic_model.cpp : ã‚³ãƒ³ã‚½ãƒ¼ãƒ« ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ã‚¨ãƒ³ãƒˆãƒª ãƒã‚¤ãƒ³ãƒˆã‚’å®šç¾©ã—ã¾ã™ã€‚
+// NBP_topic_model.cpp : ƒRƒ“ƒ\[ƒ‹ ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌƒGƒ“ƒgƒŠ ƒ|ƒCƒ“ƒg‚ð’è‹`‚µ‚Ü‚·B
 //
 
 #include "stdafx.h"
 #include "NBLDA.h"
+#include "MarkedBetaNBP.h"
 
 using namespace std;
 
@@ -87,16 +88,16 @@ vector<vector<double>> createTopics(void)
 		phi[4] = phi[8] = phi[12] = phi[16] = phi[20] = 0.18;
 		topics.push_back(phi);
 	}
-	{
-		vector<double> phi(V, 0.0);
-		phi[7] = phi[11] = phi[12] = phi[13] = phi[17] = 0.20;
-		topics.push_back(phi);
-	}
-	{
-		vector<double> phi(V, 0.0);
-		phi[6] = phi[8] = phi[12] = phi[16] = phi[18] = 0.20;
-		topics.push_back(phi);
-	}
+	//{
+	//	vector<double> phi(V, 0.0);
+	//	phi[7] = phi[11] = phi[12] = phi[13] = phi[17] = 0.20;
+	//	topics.push_back(phi);
+	//}
+	//{
+	//	vector<double> phi(V, 0.0);
+	//	phi[6] = phi[8] = phi[12] = phi[16] = phi[18] = 0.20;
+	//	topics.push_back(phi);
+	//}
 
 	return topics;
 }
@@ -108,20 +109,21 @@ int _tmain(int argc, _TCHAR* argv[])
 	const int M = 1000;
 	const int N_mean = 200;
 	const int V = 25;
-	const int K = 14;
+	int K_max = 20;
 	const double ALPHA = 3.0;
-	vector<double> alpha(K, ALPHA / K);
 	boost::mt19937 engine;
 	vector<vector<double>> theta(M);
 	
-	// äººå·¥ãƒˆãƒ”ãƒƒã‚¯ãŸã¡ã®ç”Ÿæˆ
+	// lHƒgƒsƒbƒN‚½‚¿‚Ì¶¬
 	vector<vector<double>> topics = createTopics();
+	const int K = topics.size();
 	vector<boost::random::discrete_distribution<>> word_distributions(K);
 	for(int k=0; k<K; ++k){
 		word_distributions[k] = boost::random::discrete_distribution<>(topics[k]);
 	}
 
 	vector<vector<int>> corpus(M);
+	vector<double> alpha(K, ALPHA / K);
 	for(int m=0; m<M; ++m){
 		int N_m = boost::poisson_distribution<>(N_mean)(engine);
 		corpus[m].resize(N_m);
@@ -138,13 +140,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 
-	NBLDA nblda(corpus, V, K, 1);
+	//NBLDA lerner(corpus, V, K, 11);
+	MarkedBetaNBP lerner(corpus, V, K_max, 1111);
 
 	for(int i=0; i<10000; ++i){
 		cout << i;
-		nblda.train(1);
-		showTopics("topics", nblda.phi);
-		cout << ": " << nblda.calc_perplexity() << endl;
+		lerner.train(1);
+		showTopics("topics", lerner.phi,10);
+		cout << ": " << lerner.calc_perplexity() << endl;
+		lerner.show_parameters();
 	}
 
 

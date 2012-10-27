@@ -35,6 +35,7 @@ syntax: glob
 _ReSharper*\*
 *\vc90.idb
 *\vc100.idb
+*\vc110.idb
 *.intermediate.manifest
 *\BuildLog.htm
 *\mt.dep
