@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "NBLDA.h"
 #include "MarkedBetaNBP.h"
+#include "NBFTM.h"
 
 using namespace std;
 
@@ -110,7 +111,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	const int N_mean = 200;
 	const int V = 25;
 	int K_max = 20;
-	const double ALPHA = 3.0;
+	const double ALPHA = 1.0;
 	boost::mt19937 engine;
 	vector<vector<double>> theta(M);
 	
@@ -140,15 +141,16 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 
-	//NBLDA lerner(corpus, V, K, 11);
-	MarkedBetaNBP lerner(corpus, V, K_max, 1111);
+	//NBLDA learner(corpus, V, K, 11);
+	//MarkedBetaNBP learner(corpus, V, K_max, 1111);
+	NBFTM learner(corpus, V, K_max, 1111);
 
 	for(int i=0; i<10000; ++i){
 		cout << i;
-		lerner.train(1);
-		showTopics("topics", lerner.phi,10);
-		cout << ": " << lerner.calc_perplexity() << endl;
-		lerner.show_parameters();
+		learner.train(1);
+		showTopics("topics", learner.phi,10);
+		cout << ": " << learner.calc_perplexity() << endl;
+		learner.show_parameters();
 	}
 
 
