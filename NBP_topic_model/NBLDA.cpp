@@ -119,6 +119,7 @@ void NBLDA::train(int iter)
 {
 	sample_p();
 	sample_l();
+	sample_l_prime();
 	sample_gamma_0();
 	sample_r();
 	sample_theta();
